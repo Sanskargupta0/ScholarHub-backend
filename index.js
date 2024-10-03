@@ -4,10 +4,11 @@ const express = require("express");
 const app = express();
 const server = http.createServer(app);
 const connectDB = require("./server/utils/db");
+const admin = require("firebase-admin");
 const errorMiddleware = require("./server/middleware/error_middleware");
 const contactRouter = require("./server/router/contact-router");
 const authRouter = require("./server/router/auth-router");
-const admin = require("firebase-admin");
+const userRouter = require("./server/router/userData-router");
 
 const serviceAccount = require("./server/utils/firebase");
 
@@ -42,6 +43,7 @@ app.get("/", (req, res) => {
 });
 app.use("/", contactRouter);
 app.use("/", authRouter);
+app.use("/", userRouter);
 app.use(errorMiddleware);
 
 const port = process.env.Port || 3000;
