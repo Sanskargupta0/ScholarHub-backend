@@ -7,6 +7,15 @@ const connectDB = require("./server/utils/db");
 const errorMiddleware = require("./server/middleware/error_middleware");
 const contactRouter = require("./server/router/contact-router");
 const authRouter = require("./server/router/auth-router");
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./server/utils/firebase");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));

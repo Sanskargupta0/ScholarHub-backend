@@ -7,6 +7,8 @@ const schemaMiddleware = require("../middleware/validate-middleware");
 const Otp = require("../validator/otp-validator");
 const authToken = require("../middleware/auth-token");
 const otpMiddleware = require("../middleware/otpMiddleware");
+const FirebaseValidator = require("../middleware/firbase-validator");
+const firebaseValidator = require("../middleware/firbase-validator");
 
 // two ways to write the same thing
 // router.get("/", (req, res) => {
@@ -33,6 +35,9 @@ router
 router
   .route("/validatePassResetOTP")
   .post(schemaMiddleware(Otp.resetOtpSchema), authControllers.validatePassResetOTP);
+router
+  .route("/loginWithSocialMedia")
+  .post(firebaseValidator, authControllers.loginWithSocialMedia);
 router
   .route("/tokenValidation")
   .post(authToken,(req,res)=>{

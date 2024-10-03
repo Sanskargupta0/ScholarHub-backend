@@ -5,39 +5,38 @@ const sendMail = require("../utils/sendmail");
 
 const register = async (req, res) => {
   try {
-    const {firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists && userExists.isVerified) {
       res.status(400).json({ msg: "user already exists" });
     } else {
-        if (userExists) {
-          await userExists.updateOne({
-            firstName,
-            lastName,
-            email: email.toLowerCase(),
-            password: await genrateNewPass(password),
-            avatarURL: generateAvatar(),
-          });
-          res.status(201).json({
-            msg: "Reregistation successful",
-            email: email.toLowerCase(),
-          });
-        } else {
-          const userCreated = await User.create({
-            firstName,
-            lastName,
-            email: email.toLowerCase(),
-            password,
-            avatarURL: generateAvatar(),
-          });
-          userCreated.save();
-          res.status(201).json({
-            msg: "Registation successful",
-            email: email.toLowerCase(),
-          });
-        }
-      
+      if (userExists) {
+        await userExists.updateOne({
+          firstName,
+          lastName,
+          email: email.toLowerCase(),
+          password: await genrateNewPass(password),
+          avatarURL: generateAvatar(),
+        });
+        res.status(201).json({
+          msg: "Reregistation successful",
+          email: email.toLowerCase(),
+        });
+      } else {
+        const userCreated = await User.create({
+          firstName,
+          lastName,
+          email: email.toLowerCase(),
+          password,
+          avatarURL: generateAvatar(),
+        });
+        userCreated.save();
+        res.status(201).json({
+          msg: "Registation successful",
+          email: email.toLowerCase(),
+        });
+      }
     }
   } catch (err) {
     console.log(err);
@@ -333,6 +332,64 @@ const genrateNewPass = async function (password) {
   }
 };
 
+const loginWithSocialMedia = async (req, res) => {
+  const { email, displayName, photoURL, phoneNumber } = req.body;
+  let userPhone = phoneNumber || "";
+  try {
+    if (email === undefined || email === null || email === "") {
+      res
+        .status(400)
+        .json({ msg: "Email is not provided in your Social Media Account" });
+    } else {
+      const userExists = await User.findOne({ email: email.toLowerCase() });
+      if (!userExists) {
+        const firstName = displayName.split(" ")[0];
+        const lastName = displayName.split(" ")[1] || "";
+        const password = Math.floor(
+          10000000 + Math.random() * 90000000
+        ).toString();
+        const userCreated = await User.create({
+          firstName: firstName,
+          lastName: lastName,
+          email: email.toLowerCase(),
+          password: password,
+          avatarURL: photoURL,
+          phone: userPhone,
+          isVerified: true,
+        });
+        userCreated.save();
+        const mailSent = await sendMail(email, "login", firstName, password);
+        if (mailSent.accepted[0] === `${email}`) {
+          res.status(201).json({
+            msg: "Registation successful",
+            token: await userCreated.generateAuthToken(),
+          });
+        } else {
+          res.status(400).json({
+            msg: "Registation Failed",
+            extrD: "Failed to send mail please contact Administrator",
+          });
+          User.deleteOne({ email: email.toLowerCase() });
+        }
+      } else {
+        if (userExists.isVerified === false) {
+          await userExists.updateOne({
+            isVerified: true,
+            phone: userPhone,
+            avatarURL: photoURL,
+          });
+        }
+        res.status(200).json({
+          msg: "login successful",
+          token: await userExists.generateAuthToken(),
+        });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ msg: error });
+  }
+};
+
 function generateAvatar() {
   const avatars = ["Cat", "Crocodile", "Girl", "Gorilla", "Mummy", "Ninja"];
   const randomIndex = Math.floor(Math.random() * avatars.length);
@@ -348,4 +405,5 @@ module.exports = {
   validateOtp,
   forgotPassword,
   validatePassResetOTP,
+  loginWithSocialMedia,
 };
