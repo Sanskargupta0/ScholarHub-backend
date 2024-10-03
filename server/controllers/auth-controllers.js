@@ -391,7 +391,7 @@ const loginWithSocialMedia = async (req, res) => {
 };
 
 function generateAvatar() {
-  const avatars = ["Cat", "Crocodile", "Girl", "Gorilla", "Mummy", "Ninja"];
+  const avatars = ["Avatar1", "Avatar2", "Avatar3", "Avatar4", "Avatar5", "Avatar6"];
   const randomIndex = Math.floor(Math.random() * avatars.length);
   return avatars[randomIndex];
 }
