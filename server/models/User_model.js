@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { getInstallations } = require("firebase-admin/installations");
+const MimeNode = require("nodemailer/lib/mime-node");
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -47,6 +49,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  github: {
+    type: String,
+    default: "",
+  },
+  rollNumber: {
+    type: Number,
+    default: 0,
+  },
+  notifications: {
+    type: Array,
+    default: [],
+  }
 });
 
 //secure password
@@ -70,7 +84,7 @@ userSchema.methods.generateAuthToken = function (rememberMe) {
   const time = rememberMe ? "7d" : "1h";
   try {
     const token = jwt.sign(
-      { userid: user._id.toString(), email: user.email, isadmin: user.isadmin },
+      { userid: user._id.toString(), email: user.email, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: time }
     );

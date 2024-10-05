@@ -10,7 +10,7 @@ const userdata = async (req, res) => {
       });
     res.status(200).json(userDataFromDB);
   } catch (error) {
-    console.log(error);
+    res.status(500).json({ msg: error.message });
   }
 };
 
@@ -38,7 +38,7 @@ const updateUserData = async (req, res) => {
       res.status(200).json({ msg: "User data updated successfully" });
     }
   } catch (error) {
-    console.log(error);
+    res.status(500).json({ msg: error.message });
   }
 };
 

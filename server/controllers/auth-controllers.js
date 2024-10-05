@@ -38,8 +38,13 @@ const register = async (req, res) => {
         });
       }
     }
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    err = {
+      msg: "Registation failed",
+      status: 500,
+      extraD: error,
+    };
+    next(err);
   }
 };
 

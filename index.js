@@ -9,13 +9,34 @@ const errorMiddleware = require("./server/middleware/error_middleware");
 const contactRouter = require("./server/router/contact-router");
 const authRouter = require("./server/router/auth-router");
 const userRouter = require("./server/router/userData-router");
-
+const notificationRouter = require("./server/router/notification-router");
+const socketIo = require('socket.io');
 const serviceAccount = require("./server/utils/firebase");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  }
+});
+
+io.on('connection', (socket) => {
+  io.emit('userCount', io.engine.clientsCount);
+
+  socket.on('authenticate', (userId) => {
+    socket.join(userId);
+  });
+
+  socket.on('disconnect', () => {
+    io.emit('userCount', io.engine.clientsCount);
+  });
+});
 
 
 app.use(express.json({ limit: "1mb" }));
@@ -32,9 +53,12 @@ app.use((req, res, next) => {
   );
   res.setHeader("Access-Control-Allow-Credentials", true);
   res.setHeader("Access-Control-Allow-Private-Network", true);
-  //  Firefox caps this at 24 hours (86400 seconds). Chromium (starting in v76) caps at 2 hours (7200 seconds). The default value is 5 seconds.
   res.setHeader("Access-Control-Max-Age", 7200);
 
+  next();
+});
+app.use((req, res, next) => {
+  req.io = io;
   next();
 });
 
@@ -44,6 +68,7 @@ app.get("/", (req, res) => {
 app.use("/", contactRouter);
 app.use("/", authRouter);
 app.use("/", userRouter);
+app.use("/", notificationRouter);
 app.use(errorMiddleware);
 
 const port = process.env.Port || 3000;
