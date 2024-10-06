@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { getInstallations } = require("firebase-admin/installations");
-const MimeNode = require("nodemailer/lib/mime-node");
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,

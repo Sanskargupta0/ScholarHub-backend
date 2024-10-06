@@ -10,6 +10,7 @@ const contactRouter = require("./server/router/contact-router");
 const authRouter = require("./server/router/auth-router");
 const userRouter = require("./server/router/userData-router");
 const notificationRouter = require("./server/router/notification-router");
+const adminRouter = require("./server/router/admin-router");
 const socketIo = require('socket.io');
 const serviceAccount = require("./server/utils/firebase");
 
@@ -69,6 +70,7 @@ app.use("/", contactRouter);
 app.use("/", authRouter);
 app.use("/", userRouter);
 app.use("/", notificationRouter);
+app.use("/admin", adminRouter);
 app.use(errorMiddleware);
 
 const port = process.env.Port || 3000;
