@@ -7,7 +7,6 @@ const schemaMiddleware = require("../middleware/validate-middleware");
 const Otp = require("../validator/otp-validator");
 const authToken = require("../middleware/auth-token");
 const otpMiddleware = require("../middleware/otpMiddleware");
-const FirebaseValidator = require("../middleware/firbase-validator");
 const firebaseValidator = require("../middleware/firbase-validator");
 
 // two ways to write the same thing
@@ -41,7 +40,7 @@ router
 router
   .route("/tokenValidation")
   .post(authToken,(req,res)=>{
-    res.status(200).json({msg:"Token is valid"})
+    res.status(200).json({msg:"Token is valid",isAdmin:req.user.isAdmin});
   });
 
 module.exports = router;

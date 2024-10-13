@@ -1,73 +1,76 @@
 const User = require("../models/User_model");
 
 const getUsersData = async (req, res) => {
-    try {
-      const user = req.user;
-      let { filterdata } = req.body;
-      const { perPage = 10, page = 1, resetFilters } = req.query;
-      const perPageNo = Math.max(parseInt(perPage), 1);
-      const pageNo = Math.max(parseInt(page), 1);
-  
-      if (!user.isAdmin) {
-        return res
-          .status(401)
-          .json({ msg: "Unauthorized HTTP, Admin access only" });
-      }
-  
-      // Handle resetting filters
-      if (resetFilters) {
-        req.session.filterdata = null;
-        filterdata = null;
-      }
-  
-      // If no filter data is passed in the body, use session-stored data
-      if (!filterdata && req.session.filterdata) {
-        filterdata = req.session.filterdata;
-      }
-  
-      if (filterdata) {
-        // Store filter data in the session for future requests
-        req.session.filterdata = filterdata;
-  
-        const name = filterdata.name || "";
-        const email = filterdata.email || "";
-        const isAdmin = filterdata.isAdmin || "";
-        const rollNumber = filterdata.rollNumber || "";
-  
-        const query = {
-          ...(name && { name: { $regex: name, $options: "i" } }),
-          ...(email && { email: { $regex: email, $options: "i" } }),
-          ...(isAdmin && { isAdmin: { $regex: isAdmin, $options: "i" } }),
-          ...(rollNumber && { rollNumber: { $regex: rollNumber, $options: "i" } }),
-        };
-  
-        const totalUsers = await User.countDocuments(query);
-        const maxPageNo = Math.ceil(totalUsers / perPageNo);
-        const adjustedPageNo = Math.min(pageNo, maxPageNo);
-  
-        const users = await User.find(query)
-          .select({ notifications: 0, bookmarks: 0 })
-          .limit(perPageNo)
-          .skip((adjustedPageNo - 1) * perPageNo);
-  
-        res.status(200).json(users);
-      } else {
-        const totalUsers = await User.countDocuments();
-        const maxPageNo = Math.ceil(totalUsers / perPageNo);
-        const adjustedPageNo = Math.min(pageNo, maxPageNo);
-  
-        const users = await User.find()
-          .select({ notifications: 0, bookmarks: 0 })
-          .limit(perPageNo)
-          .skip((adjustedPageNo - 1) * perPageNo);
-  
-        res.status(200).json(users);
-      }
-    } catch (error) {
-      res.status(500).json({ msg: error.message });
+  try {
+    const user = req.user;
+    let { filterdata } = req.body;
+    const { perPage = 10, page = 1} = req.query;
+    const perPageNo = Math.max(parseInt(perPage), 1);
+    const pageNo = Math.max(parseInt(page), 1);
+
+    if (!user.isAdmin) {
+      return res
+        .status(401)
+        .json({ msg: "Unauthorized HTTP, Admin access only" });
     }
-  };
-  
+
+    if (filterdata) {
+      const name = filterdata.name || "";
+      const email = filterdata.email || "";
+      const rollNumber = filterdata.rollNumber || 0;
+      const isAdmin = filterdata.role || false;
+      const lastName = filterdata.lastName || "";
+      const phone = filterdata.phone || "";
+      
+
+      const query = {
+        ...(name && { firstName: { $regex: name, $options: "i" } }),
+        ...(email && { email: { $regex: email, $options: "i" } }),
+        ...(lastName && { lastName: { $regex: lastName, $options: "i" } }),
+        ...(phone && { phone: { $regex: phone, $options: "i" } }),
+      };
+      if (rollNumber) {
+        query.$expr = { $regexMatch: { input: { $toString: "$rollNumber" }, regex: rollNumber.toString() } };
+      }
+      if (isAdmin) {
+        query.isAdmin = isAdmin;
+      }
+
+      const totalUsers = await User.countDocuments(query);
+
+      if (totalUsers === 0) {
+        return res.status(200).json({
+          users: [],
+          totalUsers: 0,
+          msg: "No users found matching the filter criteria."
+        });
+      }
+
+      const maxPageNo = Math.ceil(totalUsers / perPageNo);
+      const adjustedPageNo = Math.min(pageNo, maxPageNo);
+
+      const users = await User.find(query)
+        .select({ notifications: 0, bookmarks: 0 })
+        .limit(perPageNo)
+        .skip((adjustedPageNo - 1) * perPageNo);
+
+      res.status(200).json({ users, totalUsers });
+    } else {
+      const totalUsers = await User.countDocuments();
+      const maxPageNo = Math.ceil(totalUsers / perPageNo);
+      const adjustedPageNo = Math.min(pageNo, maxPageNo);
+
+      const users = await User.find()
+        .select({ notifications: 0, bookmarks: 0 })
+        .limit(perPageNo)
+        .skip((adjustedPageNo - 1) * perPageNo);
+
+      res.status(200).json({ users, totalUsers });
+    }
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
 
 const deleteUser = async (req, res) => {
   try {

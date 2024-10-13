@@ -6,11 +6,11 @@ const handelUsersData = require("../controllers/admin-controllers");
 
 router
     .route("/getAllUsers")
-    .get(authToken, handelUsersData.getUsersData);
+    .post(authToken, handelUsersData.getUsersData);
 
 router
     .route("/deleteUser")
-    .delete(authToken, handelUsersData.deleteUser);
+    .post(authToken, handelUsersData.deleteUser);
 
 router
     .route("/updateUser")
