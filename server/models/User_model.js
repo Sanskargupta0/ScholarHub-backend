@@ -58,7 +58,11 @@ const userSchema = new mongoose.Schema({
   notifications: {
     type: Array,
     default: [],
-  }
+  },
+  status: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 //secure password

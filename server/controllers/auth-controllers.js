@@ -62,10 +62,16 @@ const login = async (req, res) => {
             .status(401)
             .json({ msg: "Invalid email or password Credentials" });
         } else {
-          res.status(200).json({
-            msg: "login successful",
-            token: await userExists.generateAuthToken(rememberMe),
-          });
+          if (userExists.status === false) {
+            res
+              .status(401)
+              .json({ msg: "Your account is blocked please contact admin" });
+          } else {
+            res.status(200).json({
+              msg: "login successful",
+              token: await userExists.generateAuthToken(rememberMe),
+            });
+          }
         }
       } else {
         res.status(401).json({
@@ -384,10 +390,16 @@ const loginWithSocialMedia = async (req, res) => {
             avatarURL: photoURL,
           });
         }
-        res.status(200).json({
-          msg: "login successful",
-          token: await userExists.generateAuthToken(),
-        });
+        if (userExists.status === false) {
+          res
+            .status(401)
+            .json({ msg: "Your account is blocked please contact admin" });
+        } else {
+          res.status(200).json({
+            msg: "login successful",
+            token: await userExists.generateAuthToken(),
+          });
+        }
       }
     }
   } catch (error) {
@@ -396,7 +408,14 @@ const loginWithSocialMedia = async (req, res) => {
 };
 
 function generateAvatar() {
-  const avatars = ["Avatar1", "Avatar2", "Avatar3", "Avatar4", "Avatar5", "Avatar6"];
+  const avatars = [
+    "Avatar1",
+    "Avatar2",
+    "Avatar3",
+    "Avatar4",
+    "Avatar5",
+    "Avatar6",
+  ];
   const randomIndex = Math.floor(Math.random() * avatars.length);
   return avatars[randomIndex];
 }

@@ -9,11 +9,6 @@ const authToken = require("../middleware/auth-token");
 const otpMiddleware = require("../middleware/otpMiddleware");
 const firebaseValidator = require("../middleware/firbase-validator");
 
-// two ways to write the same thing
-// router.get("/", (req, res) => {
-//   res.status(200).send("from the auth-router.js file");
-// });
-// but this is the preferred way
 
 
 router
