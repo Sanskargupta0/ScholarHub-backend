@@ -1,5 +1,5 @@
 const User = require("../models/User_model");
-
+const sendMail = require("../utils/sendmail");
 const getUsersData = async (req, res) => {
   try {
     const user = req.user;
@@ -91,6 +91,7 @@ const deleteUser = async (req, res) => {
     if (!deletedUser) {
       return res.status(400).json({ msg: "User not found" });
     }
+    await sendMail(deletedUser.email, "delete", deletedUser.firstName);
     res.status(200).json({ msg: "User deleted successfully" });
   } catch (error) {
     res.status(500).json({ msg: error.message });
@@ -123,16 +124,34 @@ const updateUser = async (req, res) => {
 
     let currentUTC = new Date();
     let currentIST = new Date(currentUTC.getTime() + 5.5 * 60 * 60 * 1000);
-    if (updateData.status===false || updateData.status===true) {
-      const notification = {
-        title: "Account Status Updated",
-        description: `Your account status has been updated by admin to ${
-          updateData.status ? "Active" : "Inactive"
-        }`,
-        date: currentIST,
-      };
-      userToUpdate.notifications.push(notification);
-      io.to(id).emit("newNotification", notification);
+    if (updateData.status === false || updateData.status === true) {
+      let mailSent;
+      if (updateData.status === false) {
+        mailSent = await sendMail(
+          userToUpdate.email,
+          "disable",
+          userToUpdate.firstName
+        );
+      } else {
+        mailSent = await sendMail(
+          userToUpdate.email,
+          "enable",
+          userToUpdate.firstName
+        );
+      }
+      if (!mailSent) {
+        return res.status(400).json({ msg: "Failed to send email" });
+      } else {
+        const notification = {
+          title: "Account Status Updated",
+          description: `Your account status has been updated by admin to ${
+            updateData.status ? "Active" : "Inactive"
+          }`,
+          date: currentIST,
+        };
+        userToUpdate.notifications.push(notification);
+        io.to(id).emit("newNotification", notification);
+      }
     } else {
       const notification = {
         title: "Profile Updated",
