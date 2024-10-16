@@ -4,7 +4,7 @@ const getUsersData = async (req, res) => {
   try {
     const user = req.user;
     let { filterdata } = req.body;
-    const { perPage = 10, page = 1} = req.query;
+    const { perPage = 10, page = 1 } = req.query;
     const perPageNo = Math.max(parseInt(perPage), 1);
     const pageNo = Math.max(parseInt(page), 1);
 
@@ -21,7 +21,6 @@ const getUsersData = async (req, res) => {
       const isAdmin = filterdata.role || false;
       const lastName = filterdata.lastName || "";
       const phone = filterdata.phone || "";
-      
 
       const query = {
         ...(name && { firstName: { $regex: name, $options: "i" } }),
@@ -30,7 +29,12 @@ const getUsersData = async (req, res) => {
         ...(phone && { phone: { $regex: phone, $options: "i" } }),
       };
       if (rollNumber) {
-        query.$expr = { $regexMatch: { input: { $toString: "$rollNumber" }, regex: rollNumber.toString() } };
+        query.$expr = {
+          $regexMatch: {
+            input: { $toString: "$rollNumber" },
+            regex: rollNumber.toString(),
+          },
+        };
       }
       if (isAdmin) {
         query.isAdmin = isAdmin;
@@ -42,7 +46,7 @@ const getUsersData = async (req, res) => {
         return res.status(200).json({
           users: [],
           totalUsers: 0,
-          msg: "No users found matching the filter criteria."
+          msg: "No users found matching the filter criteria.",
         });
       }
 
@@ -97,6 +101,7 @@ const updateUser = async (req, res) => {
   try {
     const user = req.user;
     const { id, updateData } = req.body;
+    const io = req.io;
 
     if (!user.isAdmin) {
       return res
@@ -116,6 +121,31 @@ const updateUser = async (req, res) => {
       userToUpdate[key] = updateData[key];
     }
 
+    let currentUTC = new Date();
+    let currentIST = new Date(currentUTC.getTime() + 5.5 * 60 * 60 * 1000);
+    if (updateData.status===false || updateData.status===true) {
+      const notification = {
+        title: "Account Status Updated",
+        description: `Your account status has been updated by admin to ${
+          updateData.status ? "Active" : "Inactive"
+        }`,
+        date: currentIST,
+      };
+      userToUpdate.notifications.push(notification);
+      io.to(id).emit("newNotification", notification);
+    } else {
+      const notification = {
+        title: "Profile Updated",
+        description: `Your profile has been updated by admin and some changes have been made: ${Object.entries(
+          updateData
+        )
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(", ")}`,
+        date: currentIST,
+      };
+      userToUpdate.notifications.push(notification);
+      io.to(id).emit("newNotification", notification);
+    }
     const update = await userToUpdate.save();
     if (!update) {
       return res.status(400).json({ msg: "Failed to update user data" });

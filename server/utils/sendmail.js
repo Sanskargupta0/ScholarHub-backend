@@ -597,12 +597,7 @@ Copyright © 2024. All rights reserved.
       `;
     }
     else{
-      err = {
-        status: 400,
-        msg: "Invalid tamplate",
-        extraD: "tamplate must be user or reset",
-      }
-      next(err);
+      console.log("Invalid tamplate");
     }
 
     const transport = nademailer.createTransport({

@@ -3,10 +3,10 @@ const Otp = require("../models/Otp_model");
 const bcrypt = require("bcrypt");
 const sendMail = require("../utils/sendmail");
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
     const { firstName, lastName, email, password } = req.body;
-
+    const io = req.io;
     const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists && userExists.isVerified) {
       res.status(400).json({ msg: "user already exists" });
@@ -31,7 +31,16 @@ const register = async (req, res) => {
           password,
           avatarURL: generateAvatar(),
         });
+        let currentUTC = new Date();
+        let currentIST = new Date(currentUTC.getTime() + 5.5 * 60 * 60 * 1000);
+        const notification = {
+          title: "Welcome to the community",
+          description: `Thanks for joining this  community ${firstName} ${lastName}`,
+          date: currentIST,
+        };
+        userCreated.notifications.push(notification);
         userCreated.save();
+        io.to(userCreated._id).emit("newNotification", notification);
         res.status(201).json({
           msg: "Registation successful",
           email: email.toLowerCase(),
@@ -85,7 +94,7 @@ const login = async (req, res) => {
   }
 };
 
-const otp = async (req, res) => {
+const otp = async (req, res, next) => {
   try {
     const { email } = req.body;
 
@@ -125,8 +134,9 @@ const otp = async (req, res) => {
   }
 };
 
-const validateOtp = async (req, res) => {
+const validateOtp = async (req, res, next) => {
   const { email, otp } = req.body;
+  const io = req.io;
   try {
     const userExists = await Otp.findOne({ email: email.toLowerCase() });
     if (!userExists) {
@@ -160,6 +170,18 @@ const validateOtp = async (req, res) => {
               { $set: { isVerified: true } }
             );
             if (verfiy) {
+              let currentUTC = new Date();
+              let currentIST = new Date(
+                currentUTC.getTime() + 5.5 * 60 * 60 * 1000
+              );
+              const notification = {
+                title: "Email Verified",
+                description: `Your email is verified successfully`,
+                date: currentIST,
+              };
+              userExists.notifications.push(notification);
+              userExists.save();
+              io.to(userExists._id).emit("newNotification", notification);
               res.status(200).json({
                 msg: "OTP validation successful",
               });
@@ -247,8 +269,9 @@ const forgotPassword = async (req, res) => {
   } catch (error) {}
 };
 
-const validatePassResetOTP = async (req, res) => {
+const validatePassResetOTP = async (req, res, next) => {
   const { email, otp, password } = req.body;
+  const io = req.io;
   try {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
@@ -287,6 +310,18 @@ const validatePassResetOTP = async (req, res) => {
               { email: email.toLowerCase() },
               { $set: { password: await genrateNewPass(password) } }
             );
+            let currentUTC = new Date();
+            let currentIST = new Date(
+              currentUTC.getTime() + 5.5 * 60 * 60 * 1000
+            );
+            const notification = {
+              title: "Password Reset",
+              description: `Your password is reset successfully`,
+              date: currentIST,
+            };
+            user.notifications.push(notification);
+            user.save();
+            io.to(user._id).emit("newNotification", notification);
             res.status(200).json({ msg: "OTP validation successful" });
           } else {
             const attempt = otpExists.attempt + 1;
@@ -334,17 +369,13 @@ const genrateNewPass = async function (password) {
     const hash_password = await bcrypt.hash(password, saltRound);
     return hash_password;
   } catch (error) {
-    err = {
-      status: "400",
-      msg: "Failed to update the password",
-      extrsD: error,
-    };
-    next(err);
+    console.log(error);
   }
 };
 
 const loginWithSocialMedia = async (req, res) => {
   const { email, displayName, photoURL, phoneNumber } = req.body;
+  const io = req.io;
   let userPhone = phoneNumber || "";
   try {
     if (email === undefined || email === null || email === "") {
@@ -368,7 +399,16 @@ const loginWithSocialMedia = async (req, res) => {
           phone: userPhone,
           isVerified: true,
         });
+        let currentUTC = new Date();
+        let currentIST = new Date(currentUTC.getTime() + 5.5 * 60 * 60 * 1000);
+        const notification = {
+          title: "Welcome to the community",
+          description: `Thanks for joining this  community ${firstName} ${lastName}`,
+          date: currentIST,
+        };
+        userCreated.notifications.push(notification);
         userCreated.save();
+        io.to(userCreated._id).emit("newNotification", notification);
         const mailSent = await sendMail(email, "login", firstName, password);
         if (mailSent.accepted[0] === `${email}`) {
           res.status(201).json({
@@ -389,6 +429,18 @@ const loginWithSocialMedia = async (req, res) => {
             phone: userPhone,
             avatarURL: photoURL,
           });
+          let currentUTC = new Date();
+          let currentIST = new Date(
+            currentUTC.getTime() + 5.5 * 60 * 60 * 1000
+          );
+          const notification = {
+            title: "Email Verified",
+            description: `Your email is verified successfully`,
+            date: currentIST,
+          };
+          userExists.notifications.push(notification);
+          userExists.save();
+          io.to(userExists._id).emit("newNotification", notification);
         }
         if (userExists.status === false) {
           res
