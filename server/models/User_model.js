@@ -63,6 +63,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  editor:{
+    type: Boolean,
+    default: false
+  }
 });
 
 //secure password

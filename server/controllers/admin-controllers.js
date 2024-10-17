@@ -18,7 +18,9 @@ const getUsersData = async (req, res) => {
       const name = filterdata.name || "";
       const email = filterdata.email || "";
       const rollNumber = filterdata.rollNumber || 0;
-      const isAdmin = filterdata.role || false;
+      const isAdmin = filterdata.role==="admin" || "";
+      const editor = filterdata.role==="editor" || "";
+      const user = filterdata.role==="user" || "";
       const lastName = filterdata.lastName || "";
       const phone = filterdata.phone || "";
 
@@ -37,7 +39,14 @@ const getUsersData = async (req, res) => {
         };
       }
       if (isAdmin) {
-        query.isAdmin = isAdmin;
+        query.isAdmin = true;
+      }
+      if (editor) {
+        query.editor = true;
+      }
+      if (user) {
+        query.isAdmin = false;
+        query.editor = false;
       }
 
       const totalUsers = await User.countDocuments(query);
@@ -75,7 +84,6 @@ const getUsersData = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
-
 const deleteUser = async (req, res) => {
   try {
     const user = req.user;
