@@ -105,7 +105,6 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
-
 const updateUser = async (req, res) => {
   try {
     const user = req.user;
