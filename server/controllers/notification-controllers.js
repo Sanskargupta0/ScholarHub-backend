@@ -12,10 +12,13 @@ const createGobalNotification = async (req, res) => {
         .status(400)
         .json({ msg: "You are not authorized to create notification" });
     }
-    const notification = new Gobal_NotificationModel({ title, description });
-    await notification.save();
+    let currentUTC = new Date();
+    let currentIST = new Date(currentUTC.getTime() + 5.5 * 60 * 60 * 1000);
+    const notification = { title, description, date: currentIST };
+    const globalNotification = new Gobal_NotificationModel({ title, description });
+    await globalNotification.save();
     io.emit("newGlobalNotification", notification);
-    res.status(201).json({ msg: "Notification created successfully" });
+    res.status(201).json({ msg: "Notification created successfully", notification });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
