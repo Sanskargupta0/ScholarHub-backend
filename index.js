@@ -11,6 +11,9 @@ const authRouter = require("./server/router/auth-router");
 const userRouter = require("./server/router/userData-router");
 const notificationRouter = require("./server/router/notification-router");
 const adminRouter = require("./server/router/admin-router");
+const courseRouter = require("./server/router/course-router");
+const semesterRouter = require("./server/router/semester-router");
+const paperRouter = require("./server/router/paper-router");
 const socketIo = require('socket.io');
 const serviceAccount = require("./server/utils/firebase");
 
@@ -71,6 +74,9 @@ app.use("/", authRouter);
 app.use("/", userRouter);
 app.use("/", notificationRouter);
 app.use("/admin", adminRouter);
+app.use("/", courseRouter);
+app.use("/", semesterRouter);
+app.use("/", paperRouter);
 app.use(errorMiddleware);
 
 const port = process.env.Port || 3000;
