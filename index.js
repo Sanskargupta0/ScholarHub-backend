@@ -14,6 +14,7 @@ const adminRouter = require("./server/router/admin-router");
 const courseRouter = require("./server/router/course-router");
 const semesterRouter = require("./server/router/semester-router");
 const paperRouter = require("./server/router/paper-router");
+const awsS3Router = require("./server/router/s3-bucket-router");
 const socketIo = require('socket.io');
 const serviceAccount = require("./server/utils/firebase");
 
@@ -77,6 +78,7 @@ app.use("/admin", adminRouter);
 app.use("/", courseRouter);
 app.use("/", semesterRouter);
 app.use("/", paperRouter);
+app.use("/", awsS3Router);
 app.use(errorMiddleware);
 
 const port = process.env.Port || 3000;
